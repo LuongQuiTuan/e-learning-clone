@@ -16,19 +16,33 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 
-interface CreateCourseFormProps {
+interface CourseFormProps {
+  mode?: 'create' | 'edit';
+  course?: {
+    id: number;
+    title: string;
+    description: string;
+    instructor: string;
+    level: 'Beginner' | 'Intermediate' | 'Advanced';
+    image?: string;
+  };
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFormProps) {
-  const { addCourse } = useCourseStore();
+export default function CourseForm({
+  mode = 'create',
+  course,
+  onSuccess,
+  onCancel,
+}: CourseFormProps) {
+  const { addCourse, updateCourse } = useCourseStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [imageError, setImageError] = useState('');
@@ -38,6 +52,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
     setValue,
     formState: { errors, isSubmitting },
     setError,
+    reset,
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -48,6 +63,19 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
       image: '',
     },
   });
+
+  useEffect(() => {
+    if (course && mode === 'edit') {
+      reset({
+        title: course.title,
+        description: course.description,
+        instructor: course.instructor,
+        level: course.level,
+        image: course.image || '',
+      });
+      setImagePreview(course.image || '');
+    }
+  }, [course, mode, reset]);
 
   const StyledIconPhoto = styled(IconPhoto)`
     width: 55px;
@@ -98,20 +126,31 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
 
   const onSubmit = async (data: CourseFormData) => {
     try {
-      console.log('FOrm submitted with data: ', data);
-      addCourse(data);
-      toast.success(`🎉 Course "${data.title}" created successfully!`);
+      if (mode === 'create') {
+        addCourse(data);
+        toast.success(`🎉 Course "${data.title}" created successfully!`);
+      } else if (mode === 'edit' && course) {
+        updateCourse(course.id, {
+          ...data,
+          updatedAt: new Date().toISOString(),
+        });
+        toast.success(`🎉 Course "${data.title}" updated successfully!`);
+      }
       onSuccess?.();
     } catch (error) {
-      toast.error('❌ Failed to create course. Please try again!');
-      setError('root', { message: 'Failed to created course. Please try again!' });
+      const errorMessage =
+        mode === 'create'
+          ? 'Failed to create course. Please try again!'
+          : 'Failed to update course. Please try again!';
+      toast.error(`❌ ${errorMessage}`);
+      setError('root', { message: errorMessage });
     }
   };
   return (
     <Box>
       <CardContent>
         <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
-          Create new course
+          {mode === 'create' ? 'Create new course' : 'Edit course'}
         </Typography>
 
         {errors.root && (
@@ -271,7 +310,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                 </Button>
               )}
               <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating... ' : 'Create course'}
+                {mode === 'edit' ? 'Update course' : 'Create new course'}
               </Button>
             </Box>
           </Grid>

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface Course {
+export interface Course {
   id: number;
   title: string;
   description: string;
@@ -76,8 +76,8 @@ export const useCourseStore = create<CourseState>()(
       },
 
       updateCourse: (id, courseData) => {
-        set((state) => ({
-          courses: state.courses.map((course) =>
+        set((state) => {
+          const updatedCourses = state.courses.map((course) =>
             course.id === id
               ? {
                   ...course,
@@ -85,9 +85,12 @@ export const useCourseStore = create<CourseState>()(
                   updatedAt: new Date().toISOString(),
                 }
               : course,
-          ),
-          error: null,
-        }));
+          );
+          return {
+            courses: updatedCourses,
+            error: null,
+          };
+        });
       },
 
       deleteCourse: (id) => {

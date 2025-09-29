@@ -1,6 +1,7 @@
 'use client';
 
-import CreateCourseForm from '@/components/forms/CreateCourseForm';
+import CourseForm from '@/components/forms/CourseForm';
+
 import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
@@ -17,7 +18,7 @@ export default function NewCoursePage() {
 
   return (
     <Box sx={{ py: 3 }}>
-      <CreateCourseForm onSuccess={handleSuccess} onCancel={handleCancel} />
+      <CourseForm mode="create" onSuccess={handleSuccess} onCancel={handleCancel} />
     </Box>
   );
 }

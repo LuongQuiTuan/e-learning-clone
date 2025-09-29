@@ -15,6 +15,7 @@ import { IconEdit, IconTrashX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
+import { useRouter } from 'next/navigation';
 
 const getLevelColor = (level: string) => {
   switch (level) {
@@ -29,12 +30,13 @@ const getLevelColor = (level: string) => {
   }
 };
 
-const handleEdit = () => {
-  console.log('Open the edit modal or page');
-};
-
 export default function CoursesPage() {
   const { courses, deleteCourse } = useCourseStore();
+  const router = useRouter();
+
+  const handleEdit = (courseId: number) => {
+    router.push(`/courses/${courseId}/edit`);
+  };
 
   const [deleteModal, setDeleteModal] = useState({
     open: false,
@@ -131,7 +133,7 @@ export default function CoursesPage() {
 
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                       <IconButton color="primary">
-                        <IconEdit onClick={handleEdit} />
+                        <IconEdit onClick={() => handleEdit(course.id)} />
                       </IconButton>
                       <IconButton color="error">
                         <IconTrashX onClick={() => handleDelete(course.id, course.title)} />

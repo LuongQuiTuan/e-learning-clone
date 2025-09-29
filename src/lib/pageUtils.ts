@@ -3,6 +3,7 @@ export const getPageTitle = (pathname: string): string => {
     '/': 'Dashboard',
     '/courses': 'Courses',
     '/users': 'Users',
+    '/courses/new': 'Create new course',
   };
   return pathMap[pathname] || 'Page Not Found';
 };
