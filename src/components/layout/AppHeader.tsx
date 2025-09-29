@@ -1,45 +1,22 @@
 'use client';
 
 import { AppBar, Toolbar, IconButton, Typography, Box, Button } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { AddCircleOutline, Menu as MenuIcon } from '@mui/icons-material';
 import { useLayoutStore } from '@/lib/stores/layoutStore';
-import { styled, Theme, CSSObject } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import { getPageTitle } from '@/lib/pageUtils';
-import { usePathname } from 'next/navigation';
-
-const drawerWidth = 240;
-
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: `calc(100% - ${drawerWidth}px)`,
-  marginLeft: drawerWidth,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: `calc(${theme.spacing(7)} + 1px)`,
-  width: `calc(100% - ${theme.spacing(7)} - 1px)`,
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: `calc(${theme.spacing(8)} + 1px)`,
-    width: `calc(100% - ${theme.spacing(8)} - 1px)`,
-  },
-});
+import { usePathname, useRouter } from 'next/navigation';
+import { closedContentMixin, openedContentMixin } from '@/utils/drawerMixins';
 
 const ResponsiveAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })<{ open: boolean }>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
   ...(open && {
-    ...openedMixin(theme),
+    ...openedContentMixin(theme),
   }),
   ...(!open && {
-    ...closedMixin(theme),
+    ...closedContentMixin(theme),
   }),
 }));
 
@@ -47,29 +24,36 @@ export default function AppHeader() {
   const { toggleSidebar, sidebarOpen } = useLayoutStore();
   const pathname = usePathname();
   const currentPageTitle = getPageTitle(pathname);
+  const router = useRouter();
 
   const handleNewCourse = () => {
-    // Logic to handle creating a new course
-    console.log('New Course button clicked');
+    router.push('/courses/new');
   };
-  const renderPageActions = () => {
+
+  const renderPageAction = () => {
     switch (pathname) {
       case '/courses':
         return (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="contained"
-              onClick={handleNewCourse}
-              sx={{ backgroundColor: 'white', color: 'black' }}
-            >
-              New courses
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddCircleOutline />}
+            onClick={handleNewCourse}
+            sx={{
+              backgroundColor: 'secondary.main',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'secondary.dark',
+              },
+            }}
+          >
+            New Course
+          </Button>
         );
-      case '/users':
-        return <Box sx={{ display: 'flex', gap: 1 }}></Box>;
+      default:
+        return null;
     }
   };
+
   return (
     <ResponsiveAppBar position="fixed" open={sidebarOpen}>
       <Toolbar>
@@ -86,7 +70,8 @@ export default function AppHeader() {
           {currentPageTitle}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        {renderPageActions()}
+
+        {renderPageAction()}
       </Toolbar>
     </ResponsiveAppBar>
   );
