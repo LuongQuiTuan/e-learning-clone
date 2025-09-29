@@ -6,6 +6,7 @@ import theme from '../lib/theme';
 import AppLayout from '../components/layout/AppLayout';
 
 import ToastProvider from '@/components/ToastProvider';
+import AppRouterCacheProvider from '../../node_modules/@mui/material-nextjs/esm/v13-appRouter/appRouterV13';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,12 +31,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <ToastProvider>
-            <AppLayout>{children}</AppLayout>
-          </ToastProvider>
-        </ThemeProvider>
+        <AppRouterCacheProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <ToastProvider>
+              <AppLayout>{children}</AppLayout>
+            </ToastProvider>
+          </ThemeProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

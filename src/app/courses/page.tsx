@@ -1,5 +1,6 @@
 'use client';
 import {
+  alpha,
   Box,
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 import { useRouter } from 'next/navigation';
+import theme from '@/lib/theme';
 
 const getLevelColor = (level: string) => {
   switch (level) {
@@ -67,7 +69,7 @@ export default function CoursesPage() {
   };
   return (
     <Box sx={{ flexGrow: 1, p: 1 }} suppressHydrationWarning={true}>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
         All Courses
       </Typography>
 
@@ -82,7 +84,16 @@ export default function CoursesPage() {
                 border: '1px solid',
                 borderColor: 'grey.300',
                 borderRadius: 4,
-                '&:hover': { borderColor: 'grey.600', boxShadow: 3 },
+                transition: theme.transitions.create(['border-color', 'transform', 'box-shadow'], {
+                  duration: theme.transitions.duration.short,
+                  easing: theme.transitions.easing.easeInOut,
+                }),
+                '&:hover': {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                  borderWidth: '3px',
+                  transform: 'translateY(-1px)',
+                  boxShadow: `0 2px 16px ${alpha(theme.palette.primary.main, 0.25)}`,
+                },
               }}
             >
               <Box sx={{ position: 'relative' }}>
@@ -132,10 +143,10 @@ export default function CoursesPage() {
                     </Typography>
 
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <IconButton color="primary">
+                      <IconButton color="primary" size="small">
                         <IconEdit onClick={() => handleEdit(course.id)} />
                       </IconButton>
-                      <IconButton color="error">
+                      <IconButton color="error" size="small">
                         <IconTrashX onClick={() => handleDelete(course.id, course.title)} />
                       </IconButton>
                     </Box>

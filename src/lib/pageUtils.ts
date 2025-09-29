@@ -5,5 +5,13 @@ export const getPageTitle = (pathname: string): string => {
     '/users': 'Users',
     '/courses/new': 'Create new course',
   };
-  return pathMap[pathname] || 'Page Not Found';
+
+  if (pathMap[pathname]) {
+    return pathMap[pathname];
+  }
+
+  if (pathname.startsWith('/courses/') && pathname.endsWith('/edit')) {
+    return 'Edit course';
+  }
+  return 'Page Not Found';
 };

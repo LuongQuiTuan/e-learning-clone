@@ -37,7 +37,7 @@ export default function EditCoursePage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       <CourseForm mode="edit" onSuccess={handleSuccess} onCancel={handleCancel} course={course} />
     </Box>
   );

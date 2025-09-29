@@ -17,7 +17,7 @@ export default function NewCoursePage() {
   };
 
   return (
-    <Box sx={{ py: 3 }}>
+    <Box>
       <CourseForm mode="create" onSuccess={handleSuccess} onCancel={handleCancel} />
     </Box>
   );

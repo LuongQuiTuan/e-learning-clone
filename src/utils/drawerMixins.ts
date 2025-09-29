@@ -1,6 +1,6 @@
 import { CSSObject, Theme } from '@mui/material/styles';
 
-export const DRAWER_WIDTH = 240;
+export const DRAWER_WIDTH = 200;
 
 export const openedMixin = (theme: Theme): CSSObject => ({
   width: DRAWER_WIDTH,
