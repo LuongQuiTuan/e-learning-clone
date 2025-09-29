@@ -1,7 +1,20 @@
 'use client';
-import { Box, Card, CardContent, CardMedia, Chip, Grid, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Grid,
+  IconButton,
+  Typography,
+} from '@mui/material';
 import { useCourseStore } from '@/lib/stores/courseStore';
 import { School } from '@mui/icons-material';
+import { IconEdit, IconTrashX } from '@tabler/icons-react';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
+import DeleteConfirmationModal from '@/components/modals/DeleteConfirmationModal';
 
 const getLevelColor = (level: string) => {
   switch (level) {
@@ -15,8 +28,41 @@ const getLevelColor = (level: string) => {
       return 'default';
   }
 };
+
+const handleEdit = () => {
+  console.log('Open the edit modal or page');
+};
+
 export default function CoursesPage() {
-  const { courses } = useCourseStore();
+  const { courses, deleteCourse } = useCourseStore();
+
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    courseId: 0,
+    courseTitle: '',
+  });
+
+  const handleDelete = (courseId: number, courseTitle: string) => {
+    setDeleteModal({
+      open: true,
+      courseId,
+      courseTitle,
+    });
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({
+      open: false,
+      courseId: 0,
+      courseTitle: '',
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    deleteCourse(deleteModal.courseId);
+    toast.success(`🗑️ Course "${deleteModal.courseTitle}" deleted successfully!`);
+    handleCloseDeleteModal();
+  };
   return (
     <Box sx={{ flexGrow: 1, p: 1 }} suppressHydrationWarning={true}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
@@ -33,6 +79,7 @@ export default function CoursesPage() {
                 flexDirection: 'column',
                 border: '1px solid',
                 borderColor: 'grey.300',
+                borderRadius: 4,
                 '&:hover': { borderColor: 'grey.600', boxShadow: 3 },
               }}
             >
@@ -75,13 +122,27 @@ export default function CoursesPage() {
                   </Box>
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
-                    {course.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, height: 50 }}>
+                  <Box
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+                      {course.title}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton color="primary">
+                        <IconEdit onClick={handleEdit} />
+                      </IconButton>
+                      <IconButton color="error">
+                        <IconTrashX onClick={() => handleDelete(course.id, course.title)} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ height: 50 }}>
                     {course.description}
                   </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="h6" component="div">
                       {course.instructor}
                     </Typography>
@@ -97,6 +158,14 @@ export default function CoursesPage() {
           </Grid>
         ))}
       </Grid>
+
+      <DeleteConfirmationModal
+        open={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete course"
+        itemName={deleteModal.courseTitle}
+      />
     </Box>
   );
 }

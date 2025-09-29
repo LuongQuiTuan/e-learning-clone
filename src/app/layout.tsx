@@ -5,6 +5,8 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import theme from '../lib/theme';
 import AppLayout from '../components/layout/AppLayout';
 
+import ToastProvider from '@/components/ToastProvider';
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -30,7 +32,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AppLayout>{children}</AppLayout>
+          <ToastProvider>
+            <AppLayout>{children}</AppLayout>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

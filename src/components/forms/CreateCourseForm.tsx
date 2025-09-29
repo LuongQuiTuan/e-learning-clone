@@ -6,7 +6,6 @@ import {
   Avatar,
   Box,
   Button,
-  Card,
   CardContent,
   FormControl,
   FormHelperText,
@@ -21,6 +20,7 @@ import { useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'react-toastify';
 
 interface CreateCourseFormProps {
   onSuccess?: () => void;
@@ -38,7 +38,6 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
     setValue,
     formState: { errors, isSubmitting },
     setError,
-    clearErrors,
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -101,8 +100,10 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
     try {
       console.log('FOrm submitted with data: ', data);
       addCourse(data);
+      toast.success(`🎉 Course "${data.title}" created successfully!`);
       onSuccess?.();
     } catch (error) {
+      toast.error('❌ Failed to create course. Please try again!');
       setError('root', { message: 'Failed to created course. Please try again!' });
     }
   };
@@ -183,7 +184,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                   <Select {...field} label="Level" disabled={isSubmitting}>
                     <MenuItem value="Beginner">Beginner</MenuItem>
                     <MenuItem value="Intermediate">Intermediate</MenuItem>
-                    <MenuItem value="Hard">Hard</MenuItem>
+                    <MenuItem value="Advanced">Advanced</MenuItem>
                   </Select>
                   {errors.level && <FormHelperText>{errors.level.message}</FormHelperText>}
                 </FormControl>
