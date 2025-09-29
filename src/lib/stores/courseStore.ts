@@ -16,6 +16,7 @@ interface CourseState {
   courses: Course[];
   loading: boolean;
   error: string | null;
+  getSortedCourses: () => Course[];
   addCourse: (courseData: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateCourse: (id: number, courseData: Partial<Course>) => void;
   deleteCourse: (id: number) => void;
@@ -51,6 +52,13 @@ export const useCourseStore = create<CourseState>()(
       ],
       loading: false,
       error: null,
+
+      getSortedCourses: () => {
+        const state = get();
+        return [...state.courses].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+      },
 
       addCourse: (courseData) => {
         console.log('🏪 Store: addCourse called with:', courseData);

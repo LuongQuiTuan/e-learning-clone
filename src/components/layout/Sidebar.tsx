@@ -13,12 +13,15 @@ import {
   Tooltip,
   useTheme,
   alpha,
+  Box,
+  Typography,
 } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { styled } from '@mui/material/styles';
 import { openedMixin, closedMixin } from '@/utils/drawerMixins';
 import { IconBook2, IconHome, IconUser } from '@tabler/icons-react';
+import Image from 'next/image';
 
 const drawerWidth = 200;
 
@@ -69,7 +72,54 @@ export default function Sidebar() {
 
   return (
     <SoftMiniDrawer variant="permanent" open={sidebarOpen}>
-      <Toolbar />
+      <Toolbar
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: sidebarOpen ? 'flex-start' : 'center',
+          px: sidebarOpen ? 2 : 1,
+          minHeight: '64px !important',
+        }}
+      >
+        {sidebarOpen ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', py: 1 }}>
+            <Image
+              src="/favicon.ico"
+              alt="logo"
+              width={50}
+              height={50}
+              style={{ borderRadius: '6px' }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 'bold',
+                color: theme.palette.text.primary,
+                fontSize: '1.1rem',
+                letterSpacing: -0.025,
+              }}
+            >
+              EduPlatform
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              py: 1,
+            }}
+          >
+            <Image
+              src="/favicon.ico"
+              alt="Logo"
+              width={50}
+              height={50}
+              style={{ borderRadius: '6px' }}
+            />
+          </Box>
+        )}
+      </Toolbar>
       <Divider
         sx={{
           borderColor: alpha(theme.palette.divider, 0.06),

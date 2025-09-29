@@ -31,15 +31,10 @@ export const openedContentMixin = (theme: Theme): CSSObject => ({
   }),
 });
 
+// utils/drawerMixins.ts
 export const closedContentMixin = (theme: Theme): CSSObject => ({
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  //   marginLeft: `calc(${theme.spacing(7)} + 1px)`,
-  //   width: `calc(100% - ${theme.spacing(7)} - 1px)`,
-  //   [theme.breakpoints.up('sm')]: {
-  //     marginLeft: `calc(${theme.spacing(8)} + 1px)`,
-  //     width: `calc(100% - ${theme.spacing(8)} - 1px)`,
-  //   },
 });
