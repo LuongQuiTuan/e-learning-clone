@@ -249,19 +249,9 @@ export const useCourseStore = create<CourseState>()(
   ),
 );
 
-const hasInitialized = localStorage.getItem('courses-initialized');
-
-if (!hasInitialized) {
-  useCourseStore.setState((state) => ({
-    courses: [
-      ...state.courses,
-      ...sampleCourses.map((course, index) => ({
-        ...course,
-        id: Date.now() + index, // Better ID generation
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })),
-    ],
-  }));
-  localStorage.setItem('courses-initialized', 'true');
+let hasInitialized;
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  hasInitialized = localStorage.getItem('courses-initialized');
+} else {
+  hasInitialized = null;
 }

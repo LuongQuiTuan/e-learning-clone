@@ -5,6 +5,7 @@ interface CourseSearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear: () => void;
+  isMobile: boolean;
 }
 
 export default function CourseSearchBar({ value, onChange, onClear }: CourseSearchBarProps) {

@@ -2,7 +2,7 @@
 
 import { useCourseStore } from '@/lib/stores/courseStore';
 import { School } from '@mui/icons-material';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
@@ -160,52 +160,63 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            justifyContent: 'space-between', // space between left and right sides
+            alignItems: 'center', // vertically center items
+            mb: 3,
           }}
         >
-          <CourseSearchBar
-            onChange={setSearchTerm}
-            value={searchTerm}
-            onClear={() => setSearchTerm('')}
-          />
-          <CourseSortToggle
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onChange={handleSortChange}
-            isMobile={isMobile}
-            theme={theme}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+          {/* Left side: search bar */}
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <CourseSearchBar
+              onChange={setSearchTerm}
+              value={searchTerm}
+              onClear={() => setSearchTerm('')}
+              isMobile={isMobile}
+            />
+          </Box>
+
+          {/* Right side: sort toggle and view mode */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flexWrap: 'wrap', // allow wrapping on small screens
+              justifyContent: isMobile ? 'flex-end' : 'flex-start', // right-align on mobile
+              width: isMobile ? '100%' : 'auto',
+            }}
+          >
+            <CourseSortToggle
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onChange={handleSortChange}
+              isMobile={isMobile}
+              theme={theme}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+          </Box>
         </Box>
       </Box>
 
       {/* Grid View */}
       {viewMode === 'grid' && (
-        <Box
-          sx={{
-            height: 'calc(100vh - 200px)',
-            overflow: 'auto',
-            pb: isMobile ? 8 : 0,
-          }}
-          id="scrollableDiv"
+        <InfiniteScroll
+          dataLength={displayedCourses.length}
+          next={loadMore}
+          hasMore={hasMore}
+          loader={
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <CircularProgress />
+            </Box>
+          }
         >
-          <InfiniteScroll
-            dataLength={displayedCourses.length}
-            next={loadMore}
-            hasMore={hasMore}
-            loader={<h4>Loading...</h4>}
-            scrollableTarget="scrollableDiv"
-            scrollThreshold={0.8}
-          >
-            <CourseListGridView
-              courses={displayedCourses}
-              onCourseEdit={handleEdit}
-              onCourseDelete={handleDelete}
-            />
-          </InfiniteScroll>
-        </Box>
+          <CourseListGridView
+            courses={displayedCourses}
+            onCourseEdit={handleEdit}
+            onCourseDelete={handleDelete}
+          />
+        </InfiniteScroll>
       )}
 
       {/* Table View */}
