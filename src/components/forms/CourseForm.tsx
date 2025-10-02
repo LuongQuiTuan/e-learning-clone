@@ -35,7 +35,6 @@ export default function CourseForm({
 }: CourseFormProps) {
   const { addCourse, updateCourse } = useCourseStore();
   const { courseDraft, saveDraft, clearDraft, hasDraft } = useFormDraftStore();
-
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saving' | 'saved' | ''>('');
   const hasRestoredDraft = useRef(false);
   const isMobile = useIsMobile();

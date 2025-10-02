@@ -25,7 +25,7 @@ export default function CourseListGridView({
 }: CourseListGridViewProps) {
   const theme = useTheme();
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={3} sx={{ p: 1 }}>
       {courses.map((course) => (
         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={course.id}>
           <Card

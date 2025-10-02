@@ -110,10 +110,10 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
     });
   };
 
-  const handleConfirmDelete = () => {
-    deleteCourse(deleteModal.courseId);
-    toast.success(`🗑️ Course "${deleteModal.courseTitle}" deleted successfully!`);
+  const handleConfirmDelete = async () => {
+    await deleteCourse(deleteModal.courseId);
     handleCloseDeleteModal();
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
     <Box
       sx={{
         p: 3,
-        pb: isMobile ? '100px' : 0,
+        pb: isMobile ? 8 : 3,
       }}
     >
       <Typography variant="h4" fontWeight="bold" gutterBottom>
