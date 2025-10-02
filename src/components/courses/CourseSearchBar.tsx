@@ -8,7 +8,12 @@ interface CourseSearchBarProps {
   isMobile: boolean;
 }
 
-export default function CourseSearchBar({ value, onChange, onClear }: CourseSearchBarProps) {
+export default function CourseSearchBar({
+  value,
+  onChange,
+  onClear,
+  isMobile,
+}: CourseSearchBarProps) {
   return (
     <TextField
       placeholder="Search courses..."
@@ -16,11 +21,12 @@ export default function CourseSearchBar({ value, onChange, onClear }: CourseSear
       size="small"
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      fullWidth={isMobile}
       sx={{
-        minWidth: 400,
         '& .MuiOutlinedInput-root': {
           borderRadius: 3,
         },
+        width: isMobile ? '100%' : '400px',
       }}
       slotProps={{
         input: {

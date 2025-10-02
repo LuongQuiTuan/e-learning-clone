@@ -144,58 +144,47 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
         pb: isMobile ? '100px' : 0,
       }}
     >
+      <Typography variant="h4" fontWeight="bold" gutterBottom>
+        All Courses
+      </Typography>
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          gap: 2,
+          width: '100%',
           mb: 3,
         }}
       >
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            All Courses
-          </Typography>
+        {/* Search Bar container fills available space */}
+        <Box sx={{ flexGrow: 1 }}>
+          <CourseSearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onClear={() => setSearchTerm('')}
+            isMobile={isMobile}
+          />
         </Box>
+
+        {/* Toggle buttons container pushed to right */}
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'space-between', // space between left and right sides
-            alignItems: 'center', // vertically center items
-            mb: 3,
+            gap: 1,
+            justifyContent: 'flex-end',
+            width: isMobile ? '100%' : 'auto',
           }}
         >
-          {/* Left side: search bar */}
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <CourseSearchBar
-              onChange={setSearchTerm}
-              value={searchTerm}
-              onClear={() => setSearchTerm('')}
-              isMobile={isMobile}
-            />
-          </Box>
-
-          {/* Right side: sort toggle and view mode */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              flexWrap: 'wrap', // allow wrapping on small screens
-              justifyContent: isMobile ? 'flex-end' : 'flex-start', // right-align on mobile
-              width: isMobile ? '100%' : 'auto',
-            }}
-          >
-            <CourseSortToggle
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onChange={handleSortChange}
-              isMobile={isMobile}
-              theme={theme}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-          </Box>
+          <CourseSortToggle
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onChange={handleSortChange}
+            isMobile={isMobile}
+            theme={theme}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
         </Box>
       </Box>
 
