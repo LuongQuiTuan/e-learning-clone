@@ -1,16 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-export interface Course {
-  id: number;
-  title: string;
-  description: string;
-  instructor: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  image?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Course } from '../types/course';
 
 interface CourseState {
   courses: Course[];

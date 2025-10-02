@@ -16,10 +16,11 @@ import { styled } from '@mui/material/styles';
 import { getPageTitle } from '@/lib/pageUtils';
 import { usePathname, useRouter } from 'next/navigation';
 import { closedContentMixin, openedContentMixin } from '@/utils/drawerMixins';
+import { useIsMobile } from '@/hooks/useMobile';
 
 const ResponsiveAppBar = styled(AppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<{ open: boolean }>(({ theme, open }) => ({
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'isMobile',
+})<{ open: boolean; isMobile: boolean }>(({ theme, open, isMobile }) => ({
   zIndex: theme.zIndex.drawer + 1,
   backgroundColor: alpha(theme.palette.background.paper, 0.95),
   backdropFilter: 'blur(12px)',
@@ -27,11 +28,19 @@ const ResponsiveAppBar = styled(AppBar, {
   boxShadow: `0 1px 20px ${alpha(theme.palette.common.black, 0.05)}`,
   color: theme.palette.text.primary,
 
-  ...(open && {
-    ...openedContentMixin(theme),
-  }),
-  ...(!open && {
-    ...closedContentMixin(theme),
+  ...(!isMobile &&
+    open && {
+      ...openedContentMixin(theme),
+    }),
+  ...(!isMobile &&
+    !open && {
+      ...closedContentMixin(theme),
+    }),
+
+  ...(isMobile && {
+    width: '100%',
+    marginLeft: 0,
+    transition: 'none',
   }),
 }));
 
@@ -41,6 +50,7 @@ export default function AppHeader() {
   const currentPageTitle = getPageTitle(pathname);
   const router = useRouter();
   const theme = useTheme();
+  const isMobile = useIsMobile();
 
   const handleNewCourse = () => {
     router.push('/courses/new');
@@ -134,37 +144,42 @@ export default function AppHeader() {
   };
 
   return (
-    <ResponsiveAppBar position="fixed" open={sidebarOpen} elevation={0}>
+    <ResponsiveAppBar position="fixed" open={sidebarOpen} elevation={0} isMobile={isMobile}>
       <Toolbar sx={{ py: 1 }}>
-        <IconButton
-          color="inherit"
-          aria-label="toggle sidebar"
-          edge="start"
-          onClick={toggleSidebar}
-          sx={{
-            mr: 3,
+        {!isMobile && (
+          <IconButton
+            color="inherit"
+            aria-label="toggle sidebar"
+            edge="start"
+            onClick={toggleSidebar}
+            sx={{
+              mr: 3,
 
-            borderRadius: 1.5,
-            p: 1,
+              borderRadius: 1.5,
+              p: 1,
 
-            transition: theme.transitions.create(['background-color', 'transform', 'box-shadow'], {
-              duration: theme.transitions.duration.short,
-              easing: theme.transitions.easing.easeInOut,
-            }),
+              transition: theme.transitions.create(
+                ['background-color', 'transform', 'box-shadow'],
+                {
+                  duration: theme.transitions.duration.short,
+                  easing: theme.transitions.easing.easeInOut,
+                },
+              ),
 
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.2),
-              transform: 'translateY(-1px)',
-              boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`,
-            },
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                transform: 'translateY(-1px)',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`,
+              },
 
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
+              '&:active': {
+                transform: 'translateY(0)',
+              },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
 
         <Typography
           variant="h6"

@@ -1,7 +1,9 @@
 'use client';
 
 import CourseForm from '@/components/forms/CourseForm';
-import { Course, useCourseStore } from '@/lib/stores/courseStore';
+import { useIsMobile } from '@/hooks/useMobile';
+import { useCourseStore } from '@/lib/stores/courseStore';
+import { Course } from '@/lib/types/course';
 import { Box } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -15,6 +17,7 @@ export default function EditCoursePage() {
   const courseId = parseInt(params.id as string);
   const [course, setCourse] = useState<Course | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const foundCourse = getCourseById(courseId);

@@ -1,0 +1,202 @@
+'use client';
+
+import { useCourseStore } from '@/lib/stores/courseStore';
+import { School } from '@mui/icons-material';
+import { Box, Typography, useTheme } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
+import { useIsMobile } from '@/hooks/useMobile';
+import CourseTableView from './CourseTableView';
+import { CoursesListViewProps } from '@/lib/types/course';
+import CourseListGridView from './CourseGridView';
+import { useDebounce } from '@/hooks/useDebounce';
+import CourseSearchBar from './CourseSearchBar';
+import CourseSortToggle from './CouseSortToggle';
+
+export default function CourseListView({ onCourseEdit, onCourseDelete }: CoursesListViewProps) {
+  const { getSortedCourses, deleteCourse } = useCourseStore();
+  const router = useRouter();
+  const courses = getSortedCourses();
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const isMobile = useIsMobile();
+  const theme = useTheme();
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
+  const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const filteredAndSortedCourses = useMemo(() => {
+    let results = courses;
+    if (debouncedSearchTerm?.trim()) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
+      results = courses.filter((course) => course.title.toLowerCase().includes(searchLower));
+    }
+
+    const sorted = [...results].sort((a, b) => {
+      const sortKey = `${sortBy}-${sortOrder}`; //combine name, not minus
+      console.log(sortKey);
+
+      switch (sortKey) {
+        case 'name-asc':
+          return a.title.localeCompare(b.title);
+
+        case 'name-desc':
+          return b.title.localeCompare(a.title);
+
+        case 'date-asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+
+        case 'date-desc':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [courses, debouncedSearchTerm, sortBy, sortOrder]);
+
+  const handleSortChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newSort: 'name' | 'date' | null,
+  ) => {
+    if (newSort === null) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else if (sortBy === newSort) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSort);
+      setSortOrder(newSort === 'date' ? 'desc' : 'asc');
+    }
+  };
+
+  useEffect(() => {
+    if (isMobile && viewMode === 'table') {
+      setViewMode('grid');
+    }
+  }, [isMobile, viewMode]);
+
+  const handleEdit = (courseId: number) => {
+    onCourseEdit?.(courseId) || router.push(`/courses/${courseId}/edit`);
+  };
+
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    courseId: 0,
+    courseTitle: '',
+  });
+
+  const handleDelete = (courseId: number, courseTitle: string) => {
+    setDeleteModal({
+      open: true,
+      courseId,
+      courseTitle,
+    });
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({
+      open: false,
+      courseId: 0,
+      courseTitle: '',
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    deleteCourse(deleteModal.courseId);
+    toast.success(`🗑️ Course "${deleteModal.courseTitle}" deleted successfully!`);
+    handleCloseDeleteModal();
+  };
+
+  return (
+    <Box
+      sx={{
+        p: 3,
+        pb: isMobile ? '100px' : 0,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            All Courses
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <CourseSearchBar
+            onChange={setSearchTerm}
+            value={searchTerm}
+            onClear={() => setSearchTerm('')}
+          />
+          <CourseSortToggle
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onChange={handleSortChange}
+            isMobile={isMobile}
+            theme={theme}
+          />
+        </Box>
+      </Box>
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <CourseListGridView
+          courses={filteredAndSortedCourses}
+          onCourseEdit={handleEdit}
+          onCourseDelete={handleDelete}
+        />
+      )}
+
+      {/* Table View */}
+      {viewMode === 'table' && !isMobile && (
+        <CourseTableView
+          courses={filteredAndSortedCourses}
+          onCourseEdit={handleEdit}
+          onCourseDelete={handleDelete}
+        />
+      )}
+
+      {/* Empty State */}
+      {courses.length === 0 && (
+        <Box
+          sx={{
+            textAlign: 'center',
+            py: 8,
+            px: 3,
+          }}
+        >
+          <School sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No courses found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Start by creating your first course
+          </Typography>
+        </Box>
+      )}
+
+      <DeleteConfirmationModal
+        open={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete course"
+        itemName={deleteModal.courseTitle}
+      />
+    </Box>
+  );
+}

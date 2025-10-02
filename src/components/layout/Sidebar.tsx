@@ -15,6 +15,8 @@ import {
   alpha,
   Box,
   Typography,
+  BottomNavigation,
+  BottomNavigationAction,
 } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
@@ -22,6 +24,8 @@ import { styled } from '@mui/material/styles';
 import { openedMixin, closedMixin } from '@/utils/drawerMixins';
 import { IconBook2, IconHome, IconUser } from '@tabler/icons-react';
 import Image from 'next/image';
+import { useState } from 'react';
+import { useIsMobile } from '@/hooks/useMobile';
 
 const drawerWidth = 200;
 
@@ -54,6 +58,41 @@ const SoftMiniDrawer = styled(Drawer, {
   }),
 }));
 
+const StyledBottomNavigation = styled(BottomNavigation)(({ theme }) => ({
+  position: 'fixed',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  zIndex: theme.zIndex.appBar,
+  backgroundColor: alpha(theme.palette.background.paper, 0.98),
+  backdropFilter: 'blur(10px)',
+  borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+  boxShadow: '0 -4px 24px rgba(0, 0, 0, 0.04)',
+  height: 80,
+  '& .MuiBottomNavigationAction-root': {
+    color: theme.palette.text.secondary,
+    transition: theme.transitions.create(['color', 'transform', 'background-color'], {
+      duration: theme.transitions.duration.short,
+      easing: theme.transitions.easing.easeInOut,
+    }),
+    borderRadius: 2,
+    margin: '4px 8px',
+    minWidth: 'auto',
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.06),
+      color: theme.palette.text.primary,
+      transform: 'translateY(-2px)',
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.15),
+      color: theme.palette.primary.main,
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.12),
+      },
+    },
+  },
+}));
+
 const menuItems = [
   { text: 'Dashboard', icon: <IconHome />, path: '/' },
   { text: 'Courses', icon: <IconBook2 />, path: '/courses' },
@@ -65,13 +104,20 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const theme = useTheme();
+  const isMobile = useIsMobile();
+  const [bottomNavValue, setBottomNavValue] = useState(0);
 
   const handleNavigation = (path: string) => {
     router.push(path);
   };
 
-  return (
-    <SoftMiniDrawer variant="permanent" open={sidebarOpen}>
+  const handleBottomNavChange = (event: React.SyntheticEvent, newValue: number) => {
+    setBottomNavValue(newValue);
+    handleNavigation(menuItems[newValue].path);
+  };
+
+  const sidebarContent = (
+    <>
       <Toolbar
         sx={{
           display: 'flex',
@@ -225,6 +271,21 @@ export default function Sidebar() {
           </ListItem>
         ))}
       </List>
-    </SoftMiniDrawer>
+    </>
+  );
+  return (
+    <>
+      {isMobile ? (
+        <StyledBottomNavigation value={bottomNavValue} onChange={handleBottomNavChange} showLabels>
+          {menuItems.map((item, index) => (
+            <BottomNavigationAction key={item.text} label={item.text} icon={item.icon} />
+          ))}
+        </StyledBottomNavigation>
+      ) : (
+        <SoftMiniDrawer variant="permanent" open={sidebarOpen}>
+          {sidebarContent}
+        </SoftMiniDrawer>
+      )}
+    </>
   );
 }

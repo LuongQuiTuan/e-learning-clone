@@ -1,26 +1,17 @@
 import { useCourseStore } from '@/lib/stores/courseStore';
 import { CourseFormData, courseSchema } from '@/schema/courseSchema';
-import { IconPhoto, IconUpload } from '@tabler/icons-react';
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  CardContent,
-  FormControl,
-  FormHelperText,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Controller, useForm } from 'react-hook-form';
+import { useCourseImageUpload } from '@/hooks/useCourseImageUpload';
+
+import { Alert, Box, Button, CardContent, Grid, Snackbar, Typography } from '@mui/material';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
+import CourseBasicFields from '../courses/CourseBasicFields';
+import CourseImageUpload from '../courses/CourseImageUpload';
+import { useFormDraftStore } from '@/lib/stores/formDraftStore';
+import { useEffect, useRef, useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useIsMobile } from '@/hooks/useMobile';
 
 interface CourseFormProps {
   mode?: 'create' | 'edit';
@@ -43,19 +34,32 @@ export default function CourseForm({
   onCancel,
 }: CourseFormProps) {
   const { addCourse, updateCourse } = useCourseStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [imageError, setImageError] = useState('');
+  const { courseDraft, saveDraft, clearDraft, hasDraft } = useFormDraftStore();
+
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saving' | 'saved' | ''>('');
+  const hasRestoredDraft = useRef(false);
+  const isMobile = useIsMobile();
+
+  const {
+    fileInputRef,
+    imagePreview,
+    imageError,
+    setImagePreview,
+    handleImageUpload,
+    handleRemoveImage,
+  } = useCourseImageUpload();
+
   const {
     control,
     handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
     setError,
+    watch,
     reset,
   } = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
-    defaultValues: {
+    defaultValues: course || {
       title: '',
       description: '',
       instructor: '',
@@ -64,8 +68,26 @@ export default function CourseForm({
     },
   });
 
+  const formData = watch();
+  const debouncedFormData = useDebounce(formData, 1000);
+
+  if (mode === 'edit' && course?.image && !imagePreview) {
+    setImagePreview(course.image);
+  }
+
+  //Auto-restore draft on mount
   useEffect(() => {
-    if (course && mode === 'edit') {
+    if (hasRestoredDraft.current) return;
+    if (mode === 'create' && hasDraft() && courseDraft) {
+      const draftData = courseDraft.data;
+      reset(draftData as CourseFormData);
+      if (draftData.image) {
+        setImagePreview(draftData.image);
+      }
+      hasRestoredDraft.current = true;
+
+      toast.info('Draft restored!', { autoClose: 2000 });
+    } else if (course && mode === 'edit') {
       reset({
         title: course.title,
         description: course.description,
@@ -73,61 +95,55 @@ export default function CourseForm({
         level: course.level,
         image: course.image || '',
       });
-      setImagePreview(course.image || '');
-    }
-  }, [course, mode, reset]);
-
-  const StyledIconPhoto = styled(IconPhoto)`
-    width: 55px;
-    height: 55px;
-  `;
-
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
-        if (file.size > 5 * 1024 * 1024) {
-          setImageError('Image size must be less than 5MB');
-          return;
-        }
-
-        if (!file.type.startsWith('image/')) {
-          setImageError('Please select a valid image file');
-          return;
-        }
-
-        const base64String = await convertToBase64(file);
-        setValue('image', base64String);
-        setImagePreview(base64String);
-        setImageError('');
-      } catch (error) {
-        setImageError('Failed to upload image');
+      if (course.image) {
+        setImagePreview(course.image);
       }
     }
-  };
+  }, [mode, course, reset, hasDraft, courseDraft, setImagePreview]);
+  //Auto-save draft when form changes
+  useEffect(() => {
+    if (mode === 'create' && isDirty && debouncedFormData) {
+      setAutoSaveStatus('saving');
+      saveDraft(debouncedFormData);
 
-  const handleRemoveImage = () => {
-    setValue('image', '');
-    setImagePreview('');
-    setImageError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setTimeout(() => {
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus(''), 2000);
+      }, 300);
+    }
+  }, [debouncedFormData, mode, isDirty, saveDraft]);
+
+  //Warn user before closing tab with unsaved changes
+  useEffect(() => {
+    if (mode === 'create' && isDirty) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [mode, isDirty]);
+
+  const handleCancelClick = () => {
+    if (mode === 'create' && isDirty) {
+      const confirmLeave = window.confirm(
+        'You have unsaved changes. Your progress is saved as a draft. Are you sure you want to leave?',
+      );
+      if (confirmLeave) {
+        onCancel?.();
+      }
+    } else {
+      onCancel?.();
     }
   };
-
   const onSubmit = async (data: CourseFormData) => {
     try {
       if (mode === 'create') {
         addCourse(data);
+        clearDraft(); // Clear draft after successful submission
         toast.success(`🎉 Course "${data.title}" created successfully!`);
       } else if (mode === 'edit' && course) {
         updateCourse(course.id, {
@@ -147,9 +163,13 @@ export default function CourseForm({
     }
   };
   return (
-    <Box>
+    <Box
+      sx={{
+        pb: isMobile ? 10 : 0,
+      }}
+    >
       <CardContent>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
           {mode === 'create' ? 'Create new course' : 'Edit course'}
         </Typography>
 
@@ -163,158 +183,31 @@ export default function CourseForm({
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Controller
-              name="title"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Course title"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  error={!!errors.title}
-                  helperText={errors.title?.message}
-                  disabled={isSubmitting}
-                />
-              )}
-            />
-            <Controller
-              name="instructor"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="Instructor"
-                  error={!!errors.instructor}
-                  helperText={errors.instructor?.message}
-                  disabled={isSubmitting}
-                  sx={{ mb: 2 }}
-                />
-              )}
-            />
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  multiline
-                  variant="outlined"
-                  maxRows={10}
-                  minRows={4}
-                  label="Description"
-                  error={!!errors.description}
-                  helperText={errors.description?.message}
-                  disabled={isSubmitting}
-                  sx={{ mb: 2 }}
-                />
-              )}
-            />
+            <CourseBasicFields control={control} errors={errors} isSubmitting={isSubmitting} />
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Controller
-              name="level"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.level} sx={{ mb: 2 }}>
-                  <InputLabel>Level</InputLabel>
-                  <Select {...field} label="Level" disabled={isSubmitting}>
-                    <MenuItem value="Beginner">Beginner</MenuItem>
-                    <MenuItem value="Intermediate">Intermediate</MenuItem>
-                    <MenuItem value="Advanced">Advanced</MenuItem>
-                  </Select>
-                  {errors.level && <FormHelperText>{errors.level.message}</FormHelperText>}
-                </FormControl>
-              )}
+            {' '}
+            <CourseImageUpload
+              imagePreview={imagePreview}
+              imageError={imageError}
+              fileInputRef={fileInputRef}
+              onImageUpload={(e) => handleImageUpload(e, setValue)}
+              onRemoveImage={() => handleRemoveImage(setValue)}
+              isSubmitting={isSubmitting}
             />
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                  Course Image
-                </Typography>
-                {imagePreview ? (
-                  <Avatar
-                    src={imagePreview}
-                    sx={{ width: '100%', height: 150 }}
-                    variant="rounded"
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: 150,
-                      bgcolor: 'grey.100',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 2,
-                    }}
-                  >
-                    <StyledIconPhoto />
-                  </Box>
-                )}
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                />
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<IconUpload />}
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSubmitting}
-                  >
-                    Upload Image
-                  </Button>
-                  {imagePreview && (
-                    <Button
-                      onClick={handleRemoveImage}
-                      variant="outlined"
-                      color="error"
-                      sx={{ ml: 2 }}
-                    >
-                      Delete
-                    </Button>
-                  )}
-
-                  {(imageError || errors.image) && (
-                    <FormHelperText error>{imageError || errors.image?.message}</FormHelperText>
-                  )}
-                </Box>
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mb: 0.5 }}
-                  >
-                    📐 Recommended: 1280x720px (16:9 ratio)
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    📁 Max 5MB • JPG, PNG, WebP supported
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-              {onCancel && (
-                <Button variant="outlined" onClick={onCancel} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-              )}
-              <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
-                {mode === 'edit' ? 'Update course' : 'Create new course'}
-              </Button>
-            </Box>
           </Grid>
         </Grid>
+
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+          {onCancel && (
+            <Button variant="outlined" onClick={handleCancelClick} disabled={isSubmitting}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
+            {mode === 'edit' ? 'Update course' : 'Create new course'}
+          </Button>
+        </Box>
       </Box>
     </Box>
   );
