@@ -99,7 +99,7 @@ export default function CourseForm({
         setImagePreview(course.image);
       }
     }
-  }, [mode, course, reset, hasDraft, courseDraft, setImagePreview]);
+  }, [mode, course, reset, hasDraft, setImagePreview]);
   //Auto-save draft when form changes
   useEffect(() => {
     if (mode === 'create' && isDirty && debouncedFormData) {
@@ -118,6 +118,8 @@ export default function CourseForm({
     if (mode === 'create' && isDirty) {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
         e.preventDefault();
+        e.returnValue = '';
+        return '';
       };
       window.addEventListener('beforeunload', handleBeforeUnload);
 

@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react';
+import { debounce } from 'lodash';
+import { useEffect, useState, useMemo } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {
-  const [debounceValue, setDebounceValue] = useState<T>(value);
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  // Memoize the debounced setter function so it persists across renders
+  const debouncedSet = useMemo(() => debounce(setDebouncedValue, delay), [delay]);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebounceValue(value);
-    }, delay);
+    debouncedSet(value);
+  }, [value, debouncedSet]);
 
+  // Cleanup on unmount: cancel any pending debounced calls
+  useEffect(() => {
     return () => {
-      clearTimeout(handler);
+      debouncedSet.cancel();
     };
-  }, [value, delay]);
+  }, [debouncedSet]);
 
-  return debounceValue;
+  return debouncedValue;
 }

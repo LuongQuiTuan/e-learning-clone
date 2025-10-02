@@ -4,16 +4,17 @@ import { useCourseStore } from '@/lib/stores/courseStore';
 import { School } from '@mui/icons-material';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
 import { useIsMobile } from '@/hooks/useMobile';
 import CourseTableView from './CourseTableView';
-import { CoursesListViewProps } from '@/lib/types/course';
+import { Course, CoursesListViewProps } from '@/lib/types/course';
 import CourseListGridView from './CourseGridView';
 import { useDebounce } from '@/hooks/useDebounce';
 import CourseSearchBar from './CourseSearchBar';
 import CourseSortToggle from './CouseSortToggle';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default function CourseListView({ onCourseEdit, onCourseDelete }: CoursesListViewProps) {
   const { getSortedCourses, deleteCourse } = useCourseStore();
@@ -26,6 +27,10 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
   const debouncedSearchTerm = useDebounce(searchTerm, 1000);
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
+  const PAGE_SIZE = 12;
 
   const filteredAndSortedCourses = useMemo(() => {
     let results = courses;
@@ -111,6 +116,27 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
     handleCloseDeleteModal();
   };
 
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    const initialItems = filteredAndSortedCourses.slice(0, PAGE_SIZE);
+    setDisplayedCourses(initialItems);
+    setHasMore(filteredAndSortedCourses.length > PAGE_SIZE);
+  }, [debouncedSearchTerm, sortBy, sortOrder]);
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    const startIndex = page * PAGE_SIZE;
+    const endIndex = nextPage * PAGE_SIZE;
+    const newItems = filteredAndSortedCourses.slice(startIndex, endIndex);
+    setDisplayedCourses((prev) => [...prev, ...newItems]);
+    setPage(nextPage);
+
+    if (displayedCourses.length + newItems.length >= filteredAndSortedCourses.length) {
+      setHasMore(false);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -149,17 +175,37 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
             onChange={handleSortChange}
             isMobile={isMobile}
             theme={theme}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         </Box>
       </Box>
 
       {/* Grid View */}
       {viewMode === 'grid' && (
-        <CourseListGridView
-          courses={filteredAndSortedCourses}
-          onCourseEdit={handleEdit}
-          onCourseDelete={handleDelete}
-        />
+        <Box
+          sx={{
+            height: 'calc(100vh - 200px)',
+            overflow: 'auto',
+            pb: isMobile ? 8 : 0,
+          }}
+          id="scrollableDiv"
+        >
+          <InfiniteScroll
+            dataLength={displayedCourses.length}
+            next={loadMore}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="scrollableDiv"
+            scrollThreshold={0.8}
+          >
+            <CourseListGridView
+              courses={displayedCourses}
+              onCourseEdit={handleEdit}
+              onCourseDelete={handleDelete}
+            />
+          </InfiniteScroll>
+        </Box>
       )}
 
       {/* Table View */}
