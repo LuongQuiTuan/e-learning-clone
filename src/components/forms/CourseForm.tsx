@@ -2,7 +2,7 @@ import { useCourseStore } from '@/lib/stores/courseStore';
 import { CourseFormData, courseSchema } from '@/schema/courseSchema';
 import { useCourseImageUpload } from '@/hooks/useCourseImageUpload';
 
-import { Alert, Box, Button, CardContent, Grid, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, CardContent, Grid, Typography } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';

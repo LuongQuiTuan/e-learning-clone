@@ -4,8 +4,7 @@ import { useCourseStore } from '@/lib/stores/courseStore';
 import { School } from '@mui/icons-material';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
+import { useEffect, useMemo, useState } from 'react';
 import DeleteConfirmationModal from '../modals/DeleteConfirmationModal';
 import { useIsMobile } from '@/hooks/useMobile';
 import CourseTableView from './CourseTableView';
@@ -41,7 +40,6 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
 
     const sorted = [...results].sort((a, b) => {
       const sortKey = `${sortBy}-${sortOrder}`; //combine name, not minus
-      console.log(sortKey);
 
       switch (sortKey) {
         case 'name-asc':
@@ -113,7 +111,11 @@ export default function CourseListView({ onCourseEdit, onCourseDelete }: Courses
   const handleConfirmDelete = async () => {
     await deleteCourse(deleteModal.courseId);
     handleCloseDeleteModal();
-    window.location.reload();
+    setPage(1);
+    const newFiltered = filteredAndSortedCourses.filter((c) => c.id !== deleteModal.courseId);
+    const initialItems = newFiltered.slice(0, PAGE_SIZE);
+    setDisplayedCourses(initialItems);
+    setHasMore(newFiltered.length > PAGE_SIZE);
   };
 
   useEffect(() => {
