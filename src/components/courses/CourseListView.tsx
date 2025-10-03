@@ -15,7 +15,7 @@ import CourseSearchBar from './CourseSearchBar';
 import CourseSortToggle from './CouseSortToggle';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-export default function CourseListView({ onCourseEdit, onCourseDelete }: CoursesListViewProps) {
+export default function CourseListView({ onCourseEdit }: CoursesListViewProps) {
   const { getSortedCourses, deleteCourse } = useCourseStore();
   const router = useRouter();
   const courses = getSortedCourses();
